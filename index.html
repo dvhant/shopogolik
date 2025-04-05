@@ -33,7 +33,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            justify-content: flex-start; /* Убираем центрирование по вертикали */
+            justify-content: flex-start;
         }
         .auth-container {
             text-align: center;
@@ -52,20 +52,6 @@
             font-size: var(--font-size-xlarge);
             margin: 10px 0;
             color: var(--soft-pink);
-        }
-        .welcome-message {
-            margin-bottom: 15px;
-            padding: 10px;
-            border-bottom: 1px dashed var(--soft-lavender);
-            text-align: center;
-        }
-        .calculator {
-            background-color: var(--soft-gray);
-            border: 1px solid var(--soft-lavender);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 15px;
         }
         button {
             background-color: var(--soft-gray);
@@ -115,15 +101,35 @@
             border-top: 1px dashed var(--soft-lavender);
             padding-top: 10px;
         }
-        .history-item {
-            margin-bottom: 5px;
-            padding: 5px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            cursor: pointer;
-            border-radius: 5px;
+        .chart {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 20px;
         }
-        .history-item:hover {
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .chart-bar-label {
+            width: 100px;
+            font-size: var(--font-size);
+        }
+        .chart-bar-fill {
+            flex-grow: 1;
+            height: 20px;
             background-color: var(--soft-lavender);
+            position: relative;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .chart-bar-fill-inner {
+            height: 100%;
+            background-color: var(--soft-blue);
+            position: absolute;
+            left: 0;
+            top: 0;
         }
     </style>
 </head>
@@ -150,7 +156,13 @@
                             <button class="category-button" data-category="restaurant">Ресторан</button>
                             <button class="category-button" data-category="entertainment">Отдых</button>
                             <button class="category-button" data-category="car">Машина</button>
-                            <button class="category-button" data-category="other">Другое</button>
+                            <button class="category-button" data-category="home">Дом</button>
+                            <button class="category-button" data-category="repair">Ремонт</button>
+                            <button class="category-button" data-category="insurance">Страхование</button>
+                            <button class="category-button" data-category="internet">Интернет</button>
+                            <button class="category-button" data-category="communication">Связь</button>
+                            <button class="category-button" data-category="bank">Банковские</button>
+                            <button class="category-button" data-category="credit">Кредиты</button>
                         </div>
                     </div>
                     <div class="form-group">
@@ -192,10 +204,7 @@
                             <button class="period-button" data-period="year">Год</button>
                         </div>
                     </div>
-                    <div class="history">
-                        <h3>История расходов:</h3>
-                        <div id="history-list"></div>
-                    </div>
+                    <div class="chart" id="chart"></div>
                     <button onclick="flipPage()">Вернуться к расходам</button>
                 </div>
             </div>
@@ -277,6 +286,7 @@
         function flipPage() {
             const pageFlip = document.getElementById('page-flip');
             pageFlip.classList.toggle('flip');
+            updateChart();
         }
 
         // ==================== КНОПКИ ====================
@@ -300,7 +310,7 @@
         document.querySelectorAll('.period-button').forEach(button => {
             button.addEventListener('click', () => {
                 setActiveButton(document.getElementById('period-buttons'), button);
-                filterExpenses();
+                updateChart();
             });
         });
 
@@ -331,7 +341,7 @@
             localStorage.setItem('expense_history', JSON.stringify(history));
 
             updatePlaceSuggestions();
-            displayExpenseHistory(history);
+            updateChart();
         }
 
         function updatePlaceSuggestions() {
@@ -346,24 +356,9 @@
             });
         }
 
-        function displayExpenseHistory(history) {
-            const historyList = document.getElementById('history-list');
-            historyList.innerHTML = '';
-            history.forEach(item => {
-                const entry = document.createElement('div');
-                entry.className = 'history-item';
-                entry.innerHTML = `
-                    <div>${new Date(item.timestamp).toLocaleString()}</div>
-                    <div>${item.category} - ${item.place} - ${item.amount.toFixed(2)} ₽</div>
-                    <div>${item.comment ? `(${item.comment})` : ''}</div>
-                `;
-                historyList.appendChild(entry);
-            });
-        }
-
-        function filterExpenses() {
+        // ==================== СТАТИСТИКА ====================
+        function updateChart() {
             const period = document.querySelector('.period-button.active').dataset.period;
-
             const history = JSON.parse(localStorage.getItem('expense_history') || "[]");
             const now = Date.now();
 
@@ -381,13 +376,49 @@
                 return true;
             });
 
-            displayExpenseHistory(filtered);
+            const categories = [
+                "products", "clothes", "transport", "utilities", "restaurant",
+                "entertainment", "car", "home", "repair", "insurance",
+                "internet", "communication", "bank", "credit"
+            ];
+
+            const totals = {};
+            categories.forEach(category => totals[category] = 0);
+
+            filtered.forEach(item => {
+                totals[item.category] += item.amount;
+            });
+
+            const chart = document.getElementById('chart');
+            chart.innerHTML = '';
+
+            const maxAmount = Math.max(...Object.values(totals));
+            categories.forEach(category => {
+                const bar = document.createElement('div');
+                bar.className = 'chart-bar';
+
+                const label = document.createElement('div');
+                label.className = 'chart-bar-label';
+                label.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+                bar.appendChild(label);
+
+                const fill = document.createElement('div');
+                fill.className = 'chart-bar-fill';
+
+                const inner = document.createElement('div');
+                inner.className = 'chart-bar-fill-inner';
+                inner.style.width = `${(totals[category] / maxAmount) * 100}%`;
+                fill.appendChild(inner);
+
+                bar.appendChild(fill);
+                chart.appendChild(bar);
+            });
         }
 
         function loadExpenseHistory() {
             const history = JSON.parse(localStorage.getItem('expense_history') || "[]");
             updatePlaceSuggestions();
-            displayExpenseHistory(history);
+            updateChart();
         }
     </script>
 </body>
