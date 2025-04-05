@@ -8,10 +8,13 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap');
         :root {
-            --matrix-green: #00ff41;
-            --matrix-dark: #0d0208;
-            --taxi-yellow: #ffd700;
-            --neon-glow: 0 0 5px var(--matrix-green);
+            --soft-blue: #a8d8ea;
+            --soft-pink: #f4c2c2;
+            --soft-lavender: #e0b0ff;
+            --soft-yellow: #fff3b0;
+            --soft-green: #c6f6c6;
+            --soft-gray: #f5f5f5;
+            --dark-gray: #333333;
             --font-size: 16px;
             --font-size-large: 18px;
             --font-size-xlarge: 22px;
@@ -21,12 +24,11 @@
         }
         body {
             font-family: 'Ubuntu Mono', monospace;
-            background-color: var(--matrix-dark);
-            color: var(--matrix-green);
+            background-color: var(--soft-gray);
+            color: var(--dark-gray);
             margin: 0;
             padding: 10px;
             line-height: 1.4;
-            text-shadow: 0 0 3px rgba(0, 255, 65, 0.3);
             font-size: var(--font-size);
             min-height: 100vh;
             display: flex;
@@ -38,9 +40,9 @@
             margin: 0 auto;
             padding: 20px;
             max-width: 300px;
-            border: 1px solid var(--matrix-green);
-            box-shadow: var(--neon-glow);
+            border: 1px solid var(--soft-blue);
             border-radius: 5px;
+            background-color: var(--soft-yellow);
         }
         .container {
             display: none;
@@ -49,22 +51,26 @@
             text-align: center;
             font-size: var(--font-size-xlarge);
             margin: 10px 0;
-            color: var(--taxi-yellow);
-            text-shadow: var(--neon-glow);
+            color: var(--soft-pink);
         }
         button {
-            background-color: var(--matrix-dark);
-            color: var(--matrix-green);
-            border: 1px solid var(--matrix-green);
+            background-color: var(--soft-gray);
+            color: var(--dark-gray);
+            border: 1px solid var(--soft-lavender);
             padding: 12px;
             font-size: var(--font-size);
             cursor: pointer;
             margin: 5px;
             transition: all 0.3s;
+            border-radius: 5px;
         }
         button:hover {
-            background-color: rgba(0, 255, 65, 0.1);
-            box-shadow: var(--neon-glow);
+            background-color: var(--soft-lavender);
+        }
+        button.active {
+            background-color: var(--soft-blue);
+            color: white;
+            border-color: var(--soft-blue);
         }
         .tabs {
             display: flex;
@@ -76,11 +82,12 @@
             text-align: center;
             padding: 10px;
             cursor: pointer;
-            border: 1px solid var(--matrix-green);
+            border: 1px solid var(--soft-lavender);
+            border-radius: 5px;
         }
         .tab-button.active {
-            background-color: var(--matrix-green);
-            color: var(--matrix-dark);
+            background-color: var(--soft-blue);
+            color: white;
         }
         .form-group {
             margin-bottom: 15px;
@@ -89,16 +96,16 @@
             display: block;
             margin-bottom: 8px;
             font-size: var(--font-size);
-            color: var(--taxi-yellow);
+            color: var(--dark-gray);
         }
         input, select {
             width: 100%;
             padding: 12px;
             font-size: var(--font-size);
-            background-color: rgba(0, 0, 0, 0.5);
-            border: 1px solid var(--matrix-green);
-            color: var(--matrix-green);
-            border-radius: 0;
+            background-color: var(--soft-gray);
+            border: 1px solid var(--soft-lavender);
+            color: var(--dark-gray);
+            border-radius: 5px;
             font-family: 'Ubuntu Mono', monospace;
         }
         .button-group {
@@ -108,17 +115,18 @@
         }
         .history {
             margin-top: 15px;
-            border-top: 1px dashed var(--matrix-green);
+            border-top: 1px dashed var(--soft-lavender);
             padding-top: 10px;
         }
         .history-item {
             margin-bottom: 5px;
             padding: 5px;
-            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
             cursor: pointer;
+            border-radius: 5px;
         }
         .history-item:hover {
-            background-color: rgba(0, 255, 65, 0.1);
+            background-color: var(--soft-lavender);
         }
         .statistics {
             display: none;
