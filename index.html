@@ -67,27 +67,36 @@
         button:hover {
             background-color: var(--soft-lavender);
         }
-        button.active {
-            background-color: var(--soft-blue);
-            color: white;
-            border-color: var(--soft-blue);
+        .page-flip {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            perspective: 1000px;
         }
-        .tabs {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 15px;
-        }
-        .tab-button {
-            flex: 1;
-            text-align: center;
-            padding: 10px;
-            cursor: pointer;
+        .page {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            transition: transform 0.6s;
             border: 1px solid var(--soft-lavender);
             border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
-        .tab-button.active {
-            background-color: var(--soft-blue);
-            color: white;
+        .page.front {
+            z-index: 2;
+            background-color: var(--soft-yellow);
+        }
+        .page.back {
+            transform: rotateY(180deg);
+            background-color: var(--soft-lavender);
+        }
+        .page-flip.flip .front {
+            transform: rotateY(-180deg);
+        }
+        .page-flip.flip .back {
+            transform: rotateY(0deg);
         }
         .form-group {
             margin-bottom: 15px;
@@ -98,7 +107,7 @@
             font-size: var(--font-size);
             color: var(--dark-gray);
         }
-        input, select {
+        input, select, textarea {
             width: 100%;
             padding: 12px;
             font-size: var(--font-size);
@@ -128,9 +137,6 @@
         .history-item:hover {
             background-color: var(--soft-lavender);
         }
-        .statistics {
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -142,58 +148,64 @@
         <div class="welcome-message">
             <h1>Привет, <span id="username"></span>!</h1>
         </div>
-        <div class="tabs">
-            <div class="tab-button active" onclick="switchTab('expenses')">Расходы</div>
-            <div class="tab-button" onclick="switchTab('statistics')">Статистика</div>
-        </div>
-        <div id="expenses-tab" class="tab-content">
-            <div class="form-group">
-                <label>Категория расхода:</label>
-                <div class="button-group" id="category-buttons">
-                    <button class="category-button active" data-category="products">Продукты</button>
-                    <button class="category-button" data-category="clothes">Одежда</button>
-                    <button class="category-button" data-category="transport">Проезд</button>
-                    <button class="category-button" data-category="utilities">Коммуналка</button>
-                    <button class="category-button" data-category="restaurant">Ресторан</button>
-                    <button class="category-button" data-category="entertainment">Отдых</button>
-                    <button class="category-button" data-category="car">Машина</button>
-                    <button class="category-button" data-category="other">Другое</button>
+        <div class="page-flip" id="page-flip">
+            <div class="page front" id="expenses-page">
+                <h2>Добавить расходы</h2>
+                <div class="form-group">
+                    <label>Категория расхода:</label>
+                    <div class="button-group" id="category-buttons">
+                        <button class="category-button active" data-category="products">Продукты</button>
+                        <button class="category-button" data-category="clothes">Одежда</button>
+                        <button class="category-button" data-category="transport">Проезд</button>
+                        <button class="category-button" data-category="utilities">Коммуналка</button>
+                        <button class="category-button" data-category="restaurant">Ресторан</button>
+                        <button class="category-button" data-category="entertainment">Отдых</button>
+                        <button class="category-button" data-category="car">Машина</button>
+                        <button class="category-button" data-category="other">Другое</button>
+                    </div>
                 </div>
-            </div>
-            <div class="form-group">
-                <label for="place">Место траты:</label>
-                <input type="text" id="place" placeholder="Введите место" list="place-suggestions">
-                <datalist id="place-suggestions"></datalist>
-            </div>
-            <div class="form-group">
-                <label>Вид оплаты:</label>
-                <div class="button-group" id="payment-method-buttons">
-                    <button class="payment-method-button active" data-payment="card">Кредитка</button>
-                    <button class="payment-method-button" data-payment="cashless">Безнал</button>
-                    <button class="payment-method-button" data-payment="cash">Наличка</button>
+                <div class="form-group">
+                    <label for="place">Место траты:</label>
+                    <input type="text" id="place" placeholder="Введите место" list="place-suggestions">
+                    <datalist id="place-suggestions"></datalist>
                 </div>
-            </div>
-            <div class="form-group">
-                <label for="amount">Сумма:</label>
-                <input type="number" id="amount" placeholder="Введите сумму" step="0.01">
-            </div>
-            <button onclick="addExpense()">Добавить расход</button>
-        </div>
-        <div id="statistics-tab" class="tab-content statistics">
-            <div class="filters">
-                <label>Период:</label>
-                <div class="button-group" id="period-buttons">
-                    <button class="period-button active" data-period="day">День</button>
-                    <button class="period-button" data-period="week">Неделя</button>
-                    <button class="period-button" data-period="month">Месяц</button>
-                    <button class="period-button" data-period="quarter">3 месяца</button>
-                    <button class="period-button" data-period="half-year">Полгода</button>
-                    <button class="period-button" data-period="year">Год</button>
+                <div class="form-group">
+                    <label>Вид оплаты:</label>
+                    <div class="button-group" id="payment-method-buttons">
+                        <button class="payment-method-button active" data-payment="card">Кредитка</button>
+                        <button class="payment-method-button" data-payment="cashless">Безнал</button>
+                        <button class="payment-method-button" data-payment="cash">Наличка</button>
+                    </div>
                 </div>
+                <div class="form-group">
+                    <label for="amount">Сумма:</label>
+                    <input type="number" id="amount" placeholder="Введите сумму" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label for="comment">Комментарий:</label>
+                    <textarea id="comment" placeholder="Добавьте комментарий"></textarea>
+                </div>
+                <button onclick="addExpense()">Добавить расход</button>
+                <button onclick="flipPage()">Перейти к статистике</button>
             </div>
-            <div class="history">
-                <h3>История расходов:</h3>
-                <div id="history-list"></div>
+            <div class="page back" id="statistics-page">
+                <h2>Статистика</h2>
+                <div class="filters">
+                    <label>Период:</label>
+                    <div class="button-group" id="period-buttons">
+                        <button class="period-button active" data-period="day">День</button>
+                        <button class="period-button" data-period="week">Неделя</button>
+                        <button class="period-button" data-period="month">Месяц</button>
+                        <button class="period-button" data-period="quarter">3 месяца</button>
+                        <button class="period-button" data-period="half-year">Полгода</button>
+                        <button class="period-button" data-period="year">Год</button>
+                    </div>
+                </div>
+                <div class="history">
+                    <h3>История расходов:</h3>
+                    <div id="history-list"></div>
+                </div>
+                <button onclick="flipPage()">Вернуться к расходам</button>
             </div>
         </div>
     </div>
@@ -269,12 +281,10 @@
             document.getElementById('app-content').style.display = 'none';
         }
 
-        // ==================== ВКЛАДКИ ====================
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.style.display = 'none');
-            document.querySelectorAll('.tab-button').forEach(button => button.classList.remove('active'));
-            document.getElementById(`${tabName}-tab`).style.display = 'block';
-            document.querySelector(`.tab-button[onclick="switchTab('${tabName}')"]`).classList.add('active');
+        // ==================== ПЕРЕЛИСТЫВАНИЕ СТРАНИЦ ====================
+        function flipPage() {
+            const pageFlip = document.getElementById('page-flip');
+            pageFlip.classList.toggle('flip');
         }
 
         // ==================== КНОПКИ ====================
@@ -308,6 +318,7 @@
             const place = document.getElementById('place').value;
             const paymentMethod = document.querySelector('.payment-method-button.active').dataset.payment;
             const amount = parseFloat(document.getElementById('amount').value);
+            const comment = document.getElementById('comment').value;
 
             if (!place || isNaN(amount)) {
                 alert("Заполните все поля!");
@@ -319,6 +330,7 @@
                 place,
                 paymentMethod,
                 amount,
+                comment,
                 timestamp: Date.now()
             };
 
@@ -351,6 +363,7 @@
                 entry.innerHTML = `
                     <div>${new Date(item.timestamp).toLocaleString()}</div>
                     <div>${item.category} - ${item.place} - ${item.amount.toFixed(2)} ₽</div>
+                    <div>${item.comment ? `(${item.comment})` : ''}</div>
                 `;
                 historyList.appendChild(entry);
             });
