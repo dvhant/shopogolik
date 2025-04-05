@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Калькулятор Расходов</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Ubuntu+Mono:wght@400;700&display=swap');
+        :root {
+            --matrix-green: #00ff41;
+            --matrix-dark: #0d0208;
+            --taxi-yellow: #ffd700;
+            --neon-glow: 0 0 5px var(--matrix-green);
+            --font-size: 16px;
+            --font-size-large: 18px;
+            --font-size-xlarge: 22px;
+        }
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Ubuntu Mono', monospace;
+            background-color: var(--matrix-dark);
+            color: var(--matrix-green);
+            margin: 0;
+            padding: 10px;
+            line-height: 1.4;
+            text-shadow: 0 0 3px rgba(0, 255, 65, 0.3);
+            font-size: var(--font-size);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .auth-container {
+            text-align: center;
+            margin: 0 auto;
+            padding: 20px;
+            max-width: 300px;
+            border: 1px solid var(--matrix-green);
+            box-shadow: var(--neon-glow);
+            border-radius: 5px;
+        }
+        .container {
+            display: none;
+        }
+        h1 {
+            text-align: center;
+            font-size: var(--font-size-xlarge);
+            margin: 10px 0;
+            color: var(--taxi-yellow);
+            text-shadow: var(--neon-glow);
+        }
+        button {
+            background-color: var(--matrix-dark);
+            color: var(--matrix-green);
+            border: 1px solid var(--matrix-green);
+            padding: 12px;
+            font-size: var(--font-size);
+            cursor: pointer;
+            width: 100%;
+            font-family: 'Ubuntu Mono', monospace;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background-color: rgba(0, 255, 65, 0.1);
+            box-shadow: var(--neon-glow);
+        }
+        .filters {
+            margin-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: var(--font-size);
+            color: var(--taxi-yellow);
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            font-size: var(--font-size);
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--matrix-green);
+            color: var(--matrix-green);
+            border-radius: 0;
+            font-family: 'Ubuntu Mono', monospace;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-left: 3px solid var(--taxi-yellow);
+        }
+        .history {
+            margin-top: 15px;
+            border-top: 1px dashed var(--matrix-green);
+            padding-top: 10px;
+        }
+        .history-item {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-bottom: 1px solid rgba(0, 255, 65, 0.2);
+            cursor: pointer;
+        }
+        .history-item:hover {
+            background-color: rgba(0, 255, 65, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container" id="auth-section">
+        <h1>Калькулятор Расходов</h1>
+        <button onclick="loginWithTelegram()">Войти через Telegram</button>
+    </div>
+    <div class="container" id="app-content">
+        <div class="welcome-message">
+            <h1>Привет, <span id="username"></span>!</h1>
+            <p>Добавьте свои расходы</p>
+        </div>
+        <div class="calculator">
+            <div class="form-group">
+                <label for="category">Категория расхода:</label>
+                <select id="category">
+                    <option value="products">Продукты</option>
+                    <option value="clothes">Одежда</option>
+                    <option value="transport">Проезд</option>
+                    <option value="utilities">Коммуналка</option>
+                    <option value="restaurant">Ресторан</option>
+                    <option value="entertainment">Отдых</option>
+                    <option value="car">Машина</option>
+                    <option value="other">Другое</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="place">Место траты:</label>
+                <input type="text" id="place" placeholder="Введите место" list="place-suggestions">
+                <datalist id="place-suggestions"></datalist>
+            </div>
+            <div class="form-group">
+                <label for="payment-method">Вид оплаты:</label>
+                <select id="payment-method">
+                    <option value="card">Кредитка</option>
+                    <option value="cashless">Безнал</option>
+                    <option value="cash">Наличка</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="amount">Сумма:</label>
+                <input type="number" id="amount" placeholder="Введите сумму" step="0.01">
+            </div>
+            <button onclick="addExpense()">Добавить расход</button>
+        </div>
+        <div class="filters">
+            <label>Период:</label>
+            <select id="period-filter">
+                <option value="day">День</option>
+                <option value="week">Неделя</option>
+                <option value="month">Месяц</option>
+                <option value="quarter">3 месяца</option>
+                <option value="half-year">Полгода</option>
+                <option value="year">Год</option>
+            </select>
+            <label>Категория:</label>
+            <select id="category-filter">
+                <option value="all">Все</option>
+                <option value="products">Продукты</option>
+                <option value="clothes">Одежда</option>
+                <option value="transport">Проезд</option>
+                <option value="utilities">Коммуналка</option>
+                <option value="restaurant">Ресторан</option>
+                <option value="entertainment">Отдых</option>
+                <option value="car">Машина</option>
+                <option value="other">Другое</option>
+            </select>
+            <button onclick="filterExpenses()">Применить фильтр</button>
+        </div>
+        <div class="history" id="history-section">
+            <h3>История расходов:</h3>
+            <div id="history-list"></div>
+        </div>
+    </div>
+    <script>
+        // Инициализация при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.Telegram?.WebApp) {
+                Telegram.WebApp.ready();
+                Telegram.WebApp.expand();
+                setTimeout(checkAuth, 300);
+            } else {
+                checkSavedSession();
+            }
+        });
+
+        // ==================== АВТОРИЗАЦИЯ ====================
+        function handleTelegramAuth() {
+            const tg = Telegram.WebApp;
+            const user = tg.initDataUnsafe.user;
+            const sessionData = {
+                user: {
+                    id: user.id,
+                    first_name: user.first_name,
+                    last_name: user.last_name || '',
+                    username: user.username || ''
+                },
+                isWebApp: true,
+                authDate: Math.floor(Date.now() / 1000)
+            };
+            localStorage.setItem('tg_auth', JSON.stringify(sessionData));
+            showAppContent(user.first_name || 'Пользователь');
+            loadExpenseHistory();
+        }
+
+        function checkSavedSession() {
+            const savedAuth = localStorage.getItem('tg_auth');
+            if (!savedAuth) {
+                showAuthButton();
+                return;
+            }
+            const session = JSON.parse(savedAuth);
+            const sessionExpired = session.authDate && 
+                (Date.now() / 1000 - session.authDate) > 30 * 24 * 60 * 60;
+            if (!sessionExpired) {
+                showAppContent(session.user.first_name || 'Пользователь');
+                loadExpenseHistory();
+            } else {
+                localStorage.removeItem('tg_auth');
+                showAuthButton();
+            }
+        }
+
+        function loginWithTelegram() {
+            if (window.Telegram?.WebApp) {
+                if (Telegram.WebApp.initDataUnsafe?.user) {
+                    handleTelegramAuth();
+                } else {
+                    showAuthButton();
+                }
+            } else {
+                const randomUser = { first_name: "Гость" };
+                showAppContent(randomUser.first_name);
+            }
+        }
+
+        function showAppContent(username) {
+            document.getElementById('auth-section').style.display = 'none';
+            document.getElementById('app-content').style.display = 'block';
+            document.getElementById('username').textContent = username;
+        }
+
+        function showAuthButton() {
+            document.getElementById('auth-section').style.display = 'block';
+            document.getElementById('app-content').style.display = 'none';
+        }
+
+        // ==================== РАСХОДЫ ====================
+        function addExpense() {
+            const category = document.getElementById('category').value;
+            const place = document.getElementById('place').value;
+            const paymentMethod = document.getElementById('payment-method').value;
+            const amount = parseFloat(document.getElementById('amount').value);
+
+            if (!place || isNaN(amount)) {
+                alert("Заполните все поля!");
+                return;
+            }
+
+            const expense = {
+                category,
+                place,
+                paymentMethod,
+                amount,
+                timestamp: Date.now()
+            };
+
+            let history = JSON.parse(localStorage.getItem('expense_history') || "[]");
+            history.push(expense);
+            localStorage.setItem('expense_history', JSON.stringify(history));
+
+            updatePlaceSuggestions();
+            displayExpenseHistory(history);
+        }
+
+        function updatePlaceSuggestions() {
+            const history = JSON.parse(localStorage.getItem('expense_history') || "[]");
+            const places = [...new Set(history.map(item => item.place))];
+            const suggestions = document.getElementById('place-suggestions');
+            suggestions.innerHTML = '';
+            places.forEach(place => {
+                const option = document.createElement('option');
+                option.value = place;
+                suggestions.appendChild(option);
+            });
+        }
+
+        function displayExpenseHistory(history) {
+            const historyList = document.getElementById('history-list');
+            historyList.innerHTML = '';
+            history.forEach(item => {
+                const entry = document.createElement('div');
+                entry.className = 'history-item';
+                entry.innerHTML = `
+                    <div>${new Date(item.timestamp).toLocaleString()}</div>
+                    <div>${item.category} - ${item.place} - ${item.amount.toFixed(2)} ₽</div>
+                `;
+                historyList.appendChild(entry);
+            });
+        }
+
+        function filterExpenses() {
+            const period = document.getElementById('period-filter').value;
+            const category = document.getElementById('category-filter').value;
+
+            const history = JSON.parse(localStorage.getItem('expense_history') || "[]");
+            const now = Date.now();
+
+            const filtered = history.filter(item => {
+                const timeDiff = now - item.timestamp;
+                const daysDiff = timeDiff / (1000 * 60 * 60 * 24);
+
+                if (period === 'day' && daysDiff > 1) return false;
+                if (period === 'week' && daysDiff > 7) return false;
+                if (period === 'month' && daysDiff > 30) return false;
+                if (period === 'quarter' && daysDiff > 90) return false;
+                if (period === 'half-year' && daysDiff > 180) return false;
+                if (period === 'year' && daysDiff > 365) return false;
+
+                return category === 'all' || item.category === category;
+            });
+
+            displayExpenseHistory(filtered);
+        }
+
+        function loadExpenseHistory() {
+            const history = JSON.parse(localStorage.getItem('expense_history') || "[]");
+            updatePlaceSuggestions();
+            displayExpenseHistory(history);
+        }
+    </script>
+</body>
+</html>
